@@ -1,0 +1,33 @@
+- id: COMMON_S3_ENCRYPTION
+  service: COMMON
+  title: "S3 buckets must enforce encryption"
+  severity: HIGH
+  rationale: "Unencrypted buckets expose data at rest."
+  evaluation:
+    evaluator: common.bucket_encryption_rule
+  references:
+    - label: "CIS AWS Foundations 2.1"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: true
+- id: COMMON_S3_DEFAULT_ENCRYPTION
+  service: COMMON
+  title: "Default encryption should be configured"
+  severity: MEDIUM
+  rationale: "Default encryption ensures new objects are protected."
+  evaluation:
+    evaluator: common.bucket_encryption_rule
+  references:
+    - label: "AWS S3 Security"
+      url: https://docs.aws.amazon.com/AmazonS3/latest/userguide/security-best-practices.html
+  autoRemediationPossible: true
+- id: COMMON_S3_COMPLIANCE
+  service: COMMON
+  title: "Track encryption compliance"
+  severity: LOW
+  rationale: "Encryption coverage is a foundational guardrail."
+  evaluation:
+    evaluator: common.bucket_encryption_rule
+  references:
+    - label: "AWS Well-Architected"
+      url: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/security.html
+  autoRemediationPossible: true

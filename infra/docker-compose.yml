@@ -1,0 +1,96 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: securescope
+      POSTGRES_USER: securescope
+      POSTGRES_PASSWORD: securescope
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U securescope"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --save "" --appendonly no
+    volumes:
+      - redis-data:/data
+
+  llm:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    environment:
+      - LLAMA_ARG_MODEL=/models/mistral-7b-instruct.gguf
+    volumes:
+      - mistral-models:/models
+    command: ["--host", "0.0.0.0", "--port", "8001"]
+
+  backend:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
+    depends_on:
+      - db
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+psycopg://securescope:securescope@db:5432/securescope
+      - REDIS_URL=redis://redis:6379/0
+      - LLM_ENDPOINT=http://llm:8001
+      - ENFORCE_HTTPS=true
+      - FEATURE_FLAGS=llm
+      - LLM_MODEL_PATH=/models/mistral-7b-instruct.gguf
+    volumes:
+      - mistral-models:/models:ro
+      - ../infra/local-https/certs:/certs:ro
+    expose:
+      - "8443"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8443", "--ssl-keyfile", "/certs/dev.key", "--ssl-certfile", "/certs/dev.crt"]
+
+  worker:
+    build:
+      context: ../
+      dockerfile: backend/Dockerfile
+    depends_on:
+      - backend
+    environment:
+      - DATABASE_URL=postgresql+psycopg://securescope:securescope@db:5432/securescope
+      - REDIS_URL=redis://redis:6379/0
+      - LLM_MODEL_PATH=/models/mistral-7b-instruct.gguf
+    volumes:
+      - mistral-models:/models:ro
+    command: ["celery", "-A", "app.services.tasks.celery_app", "worker", "--loglevel=info"]
+
+  frontend:
+    build:
+      context: ../
+      dockerfile: frontend/Dockerfile
+    depends_on:
+      - backend
+    environment:
+      - NEXT_PUBLIC_API_BASE_URL=https://securescope.local/api
+    expose:
+      - "3000"
+    volumes:
+      - ../infra/local-https/certs:/certs:ro
+
+  proxy:
+    image: caddy:2.7
+    depends_on:
+      - backend
+      - frontend
+    volumes:
+      - ../infra/local-https/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ../infra/local-https/certs:/certs:ro
+    ports:
+      - "443:443"
+    environment:
+      - DOMAIN=securescope.local
+
+volumes:
+  db-data:
+  redis-data:
+  mistral-models:

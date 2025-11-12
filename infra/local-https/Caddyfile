@@ -1,0 +1,13 @@
+{
+  auto_https disable_redirects
+  admin off
+}
+
+securescope.local {
+  tls /certs/dev.crt /certs/dev.key
+
+  @api path /api/*
+  reverse_proxy @api backend:8443
+
+  reverse_proxy frontend:3000
+}
