@@ -214,6 +214,4 @@ Controls not yet automated (e.g., Config recorder enforcement) are documented in
 - Credentials are removed immediately after scans complete.
 - Findings, metadata, and generated advice persist in PostgreSQL for historical analysis. Purge policies can be implemented via scheduled tasks or retention settings.
 
-## License
 
-Released under the [MIT License](./LICENSE). Contributions are welcome—see [CONTRIBUTING.md](./CONTRIBUTING.md).
