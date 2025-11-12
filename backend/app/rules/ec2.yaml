@@ -1,0 +1,414 @@
+- id: EC2_SG_SSH_OPEN
+  service: EC2
+  title: "Security groups should not expose SSH to the internet"
+  severity: CRITICAL
+  rationale: "Open SSH to 0.0.0.0/0 allows brute-force access."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [22]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations 4.1"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_SG_RDP_OPEN
+  service: EC2
+  title: "Security groups should not expose RDP to the internet"
+  severity: CRITICAL
+  rationale: "RDP exposure is a common ransomware vector."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [3389]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations 4.1"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-standards-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_SG_ALL_PROTOCOLS
+  service: EC2
+  title: "Security groups should not allow all protocols from anywhere"
+  severity: CRITICAL
+  rationale: "Allowing all protocols defeats network segmentation."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: []
+    protocol: "*"
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations 4.2"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_SG_HTTP_OPEN
+  service: EC2
+  title: "Security groups exposing HTTP should require ALB or WAF fronting"
+  severity: HIGH
+  rationale: "Direct HTTP exposure bypasses WAF and logging."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [80]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "AWS Security Best Practices"
+      url: https://docs.aws.amazon.com/prescriptive-guidance/latest/security-reference-architecture/welcome.html
+  autoRemediationPossible: false
+- id: EC2_SG_HTTPS_OPEN
+  service: EC2
+  title: "Security groups exposing HTTPS should enforce TLS policy"
+  severity: MEDIUM
+  rationale: "Surface TLS requirement when SG is wide-open."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [443]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "AWS Security Best Practices"
+      url: https://docs.aws.amazon.com/whitepapers/latest/introduction-aws-security/how-aws-secures.html
+  autoRemediationPossible: false
+- id: EC2_SG_CUSTOM_HIGH_PORT
+  service: EC2
+  title: "Security groups with high privileged ports open should be justified"
+  severity: MEDIUM
+  rationale: "High-numbered ports often host admin services without MFA."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [8080, 8443, 9200]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "CIS AWS Foundations"
+      url: https://www.cisecurity.org/benchmark/amazon_web_services
+  autoRemediationPossible: false
+- id: EC2_IMDSV2_ENFORCED
+  service: EC2
+  title: "IMDSv2 must be enforced on all instances"
+  severity: HIGH
+  rationale: "IMDSv1 is vulnerable to SSRF credential theft."
+  evaluation:
+    evaluator: ec2.instance_metadata_rule
+  references:
+    - label: "CIS AWS Foundations 4.2"
+      url: https://docs.aws.amazon.com/whitepapers/latest/security-hub-best-practices/amazon-ec2.html
+  autoRemediationPossible: true
+- id: EC2_PUBLIC_IMDSV1
+  service: EC2
+  title: "Public instances must enforce IMDSv2"
+  severity: CRITICAL
+  rationale: "Public instances with IMDSv1 enable remote credential theft."
+  evaluation:
+    evaluator: ec2.instance_public_exposure
+  references:
+    - label: "AWS Well-Architected"
+      url: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/security.html
+  autoRemediationPossible: true
+- id: EC2_EBS_ENCRYPTION
+  service: EC2
+  title: "EBS volumes must be encrypted"
+  severity: HIGH
+  rationale: "Unencrypted EBS volumes risk data exfiltration."
+  evaluation:
+    evaluator: ec2.volume_encryption_rule
+  references:
+    - label: "CIS AWS Foundations 2.2"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_SNAPSHOT_SHARING
+  service: EC2
+  title: "Snapshots should not be shared cross-account without review"
+  severity: HIGH
+  rationale: "Shared snapshots can leak sensitive AMIs or data."
+  evaluation:
+    evaluator: ec2.snapshot_sharing_rule
+  references:
+    - label: "CIS AWS Foundations 2.2"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: false
+- id: EC2_INSTANCE_AGE
+  service: EC2
+  title: "Instances older than 180 days should be recycled"
+  severity: MEDIUM
+  rationale: "Old instances miss patches and hardening."
+  evaluation:
+    evaluator: ec2.instance_age_rule
+    ageDays: 180
+  references:
+    - label: "AWS Patch Management"
+      url: https://docs.aws.amazon.com/patch-manager/latest/userguide/what-is-patch-manager.html
+  autoRemediationPossible: false
+- id: EC2_INSTANCE_PROFILE_ADMIN
+  service: EC2
+  title: "EC2 instance profiles must not grant administrator access"
+  severity: CRITICAL
+  rationale: "Wildcard policies on instance profiles enable privilege escalation."
+  evaluation:
+    evaluator: ec2.instance_profile_rule
+  references:
+    - label: "CIS AWS Foundations 1.16"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_TERMINATION_PROTECTION
+  service: EC2
+  title: "Critical instances should enable termination protection"
+  severity: MEDIUM
+  rationale: "Termination protection helps prevent accidental shutdowns."
+  evaluation:
+    evaluator: ec2.termination_protection_rule
+  references:
+    - label: "AWS Well-Architected"
+      url: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/security.html
+  autoRemediationPossible: true
+- id: EC2_SG_ICMP_OPEN
+  service: EC2
+  title: "Security groups should avoid wide-open ICMP"
+  severity: LOW
+  rationale: "ICMP flooding aids reconnaissance."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: []
+    protocol: icmp
+    status: WARN
+  references:
+    - label: "CIS AWS Foundations"
+      url: https://www.cisecurity.org/benchmark/amazon_web_services
+  autoRemediationPossible: false
+- id: EC2_SG_SMTP_OPEN
+  service: EC2
+  title: "Security groups should not expose SMTP"
+  severity: MEDIUM
+  rationale: "SMTP exposure risks spam abuse."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [25]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "AWS Anti-Spam"
+      url: https://aws.amazon.com/premiumsupport/knowledge-center/ec2-port-25-throttle/
+  autoRemediationPossible: false
+- id: EC2_SG_DATABASE_PUBLIC
+  service: EC2
+  title: "Databases should not be exposed directly"
+  severity: HIGH
+  rationale: "DB ports exposed to internet risk data breach."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [3306, 5432, 1521, 1433]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations 3.7"
+      url: https://docs.aws.amazon.com/securityhub/latest/userguide/securityhub-cis-controls.html
+  autoRemediationPossible: true
+- id: EC2_SG_ELASTICSEARCH_PUBLIC
+  service: EC2
+  title: "Elasticsearch ports must be private"
+  severity: HIGH
+  rationale: "Public Elasticsearch exposes sensitive logs."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [9200, 9300]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "AWS Search Service"
+      url: https://docs.aws.amazon.com/opensearch-service/latest/developerguide/security.html
+  autoRemediationPossible: true
+- id: EC2_SG_KAFKA_PUBLIC
+  service: EC2
+  title: "Kafka brokers should not be internet reachable"
+  severity: HIGH
+  rationale: "Kafka open to internet bypasses ACLs."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [9092]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "AWS MSK Security"
+      url: https://docs.aws.amazon.com/msk/latest/developerguide/security.html
+  autoRemediationPossible: true
+- id: EC2_SG_SMTP_TLS
+  service: EC2
+  title: "Legacy mail submission should be deprecated"
+  severity: LOW
+  rationale: "Encourage migration to managed mail services."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [587]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "NIST SP 800-177"
+      url: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-177r1.pdf
+  autoRemediationPossible: false
+- id: EC2_SG_RPC_PUBLIC
+  service: EC2
+  title: "RPC ports should not be exposed"
+  severity: MEDIUM
+  rationale: "RPC exposure often leads to remote code execution."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [111]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations"
+      url: https://www.cisecurity.org/benchmark/amazon_web_services
+  autoRemediationPossible: true
+- id: EC2_SG_MEMCACHED_PUBLIC
+  service: EC2
+  title: "Memcached should not be internet accessible"
+  severity: HIGH
+  rationale: "Memcached exposure enables amplification attacks."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [11211]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "US-CERT TA14-017A"
+      url: https://us-cert.cisa.gov/ncas/alerts/TA14-017A
+  autoRemediationPossible: true
+- id: EC2_SG_REDIS_PUBLIC
+  service: EC2
+  title: "Redis clusters should be private"
+  severity: HIGH
+  rationale: "Redis lacks native authentication and encryption when public."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [6379]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "Redis Security"
+      url: https://redis.io/docs/management/security/
+  autoRemediationPossible: true
+- id: EC2_SG_SMBS_PUBLIC
+  service: EC2
+  title: "SMB should not be internet facing"
+  severity: CRITICAL
+  rationale: "SMB exploits like WannaCry target open shares."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [445]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "MSRC"
+      url: https://msrc.microsoft.com/
+  autoRemediationPossible: true
+- id: EC2_SG_POSTGRES_PUBLIC
+  service: EC2
+  title: "PostgreSQL should be private"
+  severity: HIGH
+  rationale: "Public DB ports risk SQL injection at scale."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [5432]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "AWS RDS Security"
+      url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.Security.html
+  autoRemediationPossible: true
+- id: EC2_SG_MYSQL_PUBLIC
+  service: EC2
+  title: "MySQL should be private"
+  severity: HIGH
+  rationale: "Public MySQL leads to credential stuffing."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [3306]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "AWS RDS Security"
+      url: https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/UsingWithRDS.Security.html
+  autoRemediationPossible: true
+- id: EC2_SG_ORACLE_PUBLIC
+  service: EC2
+  title: "Oracle DB should be private"
+  severity: HIGH
+  rationale: "Oracle listener should not be internet facing."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [1521]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS Oracle"
+      url: https://www.cisecurity.org/benchmark/oracle_database
+  autoRemediationPossible: true
+- id: EC2_SG_MSSQL_PUBLIC
+  service: EC2
+  title: "SQL Server should be private"
+  severity: HIGH
+  rationale: "SQL Server port 1433 must be internal only."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [1433]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS Microsoft SQL"
+      url: https://www.cisecurity.org/benchmark/microsoft_sql_server
+  autoRemediationPossible: true
+- id: EC2_SG_NFS_PUBLIC
+  service: EC2
+  title: "NFS should be private"
+  severity: HIGH
+  rationale: "NFS open to internet enables data theft."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [2049]
+    protocol: tcp
+    status: FAIL
+  references:
+    - label: "CIS AWS Foundations"
+      url: https://www.cisecurity.org/benchmark/amazon_web_services
+  autoRemediationPossible: true
+- id: EC2_SG_IMAP_PUBLIC
+  service: EC2
+  title: "IMAP exposure should be eliminated"
+  severity: MEDIUM
+  rationale: "Legacy mail protocols often lack MFA."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [993]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "NIST 800-45"
+      url: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-45ver2.pdf
+  autoRemediationPossible: false
+- id: EC2_SG_POP3_PUBLIC
+  service: EC2
+  title: "POP3 exposure should be eliminated"
+  severity: MEDIUM
+  rationale: "POP3 lacks modern auth controls."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [995]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "NIST 800-45"
+      url: https://nvlpubs.nist.gov/nistpubs/legacy/sp/nistspecialpublication800-45ver2.pdf
+  autoRemediationPossible: false
+- id: EC2_SG_SMTP_SUBMISSION
+  service: EC2
+  title: "Mail submission should use AWS SES"
+  severity: LOW
+  rationale: "Prefer managed services to custom mail servers."
+  evaluation:
+    evaluator: ec2.security_group_rule
+    ports: [465]
+    protocol: tcp
+    status: WARN
+  references:
+    - label: "AWS SES"
+      url: https://aws.amazon.com/ses/
+  autoRemediationPossible: false

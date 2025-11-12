@@ -1,0 +1,40 @@
+{
+  "scan_id": "00000000-0000-0000-0000-000000000000",
+  "summary": {
+    "scanId": "00000000-0000-0000-0000-000000000000",
+    "status": "COMPLETED",
+    "severityTotals": {
+      "CRITICAL": 2,
+      "HIGH": 5,
+      "MEDIUM": 3,
+      "LOW": 1
+    },
+    "serviceTotals": {
+      "EC2": 8,
+      "EKS": 2,
+      "COMMON": 1
+    },
+    "totalFindings": 11
+  },
+  "findings": [
+    {
+      "rule_id": "EC2_SG_SSH_OPEN",
+      "service": "EC2",
+      "severity": "CRITICAL",
+      "status": "FAIL",
+      "region": "us-east-1",
+      "evidence": {
+        "exposures": [
+          {
+            "protocol": "tcp",
+            "from_port": 22,
+            "to_port": 22,
+            "cidr": "0.0.0.0/0"
+          }
+        ],
+        "security_group": "open-ssh",
+        "description": "SSH from anywhere"
+      }
+    }
+  ]
+}

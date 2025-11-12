@@ -1,0 +1,239 @@
+- id: EKS_PUBLIC_ENDPOINT_NO_CIDR
+  service: EKS
+  title: "EKS clusters with public endpoint must restrict CIDRs"
+  severity: HIGH
+  rationale: "Public EKS endpoints without CIDR allowlists invite enumeration."
+  evaluation:
+    evaluator: eks.endpoint_restriction_rule
+  references:
+    - label: "CIS Amazon EKS Benchmark 2.1"
+      url: https://www.cisecurity.org/benchmark/amazon_web_services
+  autoRemediationPossible: true
+- id: EKS_CONTROL_PLANE_LOGGING
+  service: EKS
+  title: "Enable control plane logs"
+  severity: HIGH
+  rationale: "Audit logs are required for incident response."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [api, audit, authenticator]
+  references:
+    - label: "CIS Amazon EKS Benchmark 3.1"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: true
+- id: EKS_VERSION_DRIFT_CLUSTER
+  service: EKS
+  title: "EKS cluster versions should stay within one minor release"
+  severity: HIGH
+  rationale: "Unsupported versions miss security patches."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 1
+  references:
+    - label: "AWS Containers Roadmap"
+      url: https://aws.amazon.com/containers/
+  autoRemediationPossible: false
+- id: EKS_VERSION_DRIFT_NODEGROUP
+  service: EKS
+  title: "EKS node groups should track control plane version"
+  severity: MEDIUM
+  rationale: "Worker nodes more than one minor behind lose security fixes."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 1
+  references:
+    - label: "CIS Amazon EKS Benchmark 4.1"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: false
+- id: EKS_IRSA_USAGE
+  service: EKS
+  title: "Clusters should adopt IAM Roles for Service Accounts"
+  severity: WARN
+  rationale: "IRSA enables least privilege to pods."
+  evaluation:
+    evaluator: eks.irsa_usage_rule
+  references:
+    - label: "AWS Containers Best Practices"
+      url: https://docs.aws.amazon.com/eks/latest/userguide/iam-roles-for-service-accounts.html
+  autoRemediationPossible: false
+- id: EKS_PUBLIC_ENDPOINT_DEFAULT
+  service: EKS
+  title: "Avoid default public endpoint exposure"
+  severity: HIGH
+  rationale: "EKS defaults to public endpoints; ensure private cluster."
+  evaluation:
+    evaluator: eks.endpoint_restriction_rule
+  references:
+    - label: "CIS Amazon EKS Benchmark 1.2"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: true
+- id: EKS_LOGGING_AUDIT
+  service: EKS
+  title: "Ensure audit log is enabled"
+  severity: HIGH
+  rationale: "Audit log absence prevents forensic analysis."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [audit]
+  references:
+    - label: "CIS Amazon EKS Benchmark 3.1"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: true
+- id: EKS_LOGGING_AUTHENTICATOR
+  service: EKS
+  title: "Ensure authenticator log is enabled"
+  severity: MEDIUM
+  rationale: "Authenticator logs reveal suspicious login attempts."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [authenticator]
+  references:
+    - label: "AWS Logging"
+      url: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
+  autoRemediationPossible: true
+- id: EKS_LOGGING_API
+  service: EKS
+  title: "Ensure API log is enabled"
+  severity: MEDIUM
+  rationale: "API logs capture configuration changes."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [api]
+  references:
+    - label: "AWS Logging"
+      url: https://docs.aws.amazon.com/eks/latest/userguide/control-plane-logs.html
+  autoRemediationPossible: true
+- id: EKS_NODEGROUP_STATUS
+  service: EKS
+  title: "Node groups should be ACTIVE"
+  severity: MEDIUM
+  rationale: "Non-active node groups indicate upgrade or scaling failures."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 1
+  references:
+    - label: "AWS EKS Operations"
+      url: https://docs.aws.amazon.com/eks/latest/userguide/managed-node-update.html
+  autoRemediationPossible: false
+- id: EKS_VERSION_DRIFT_MAJOR
+  service: EKS
+  title: "EKS major version skew"
+  severity: CRITICAL
+  rationale: "Major version mismatch indicates end-of-life cluster."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 0
+  references:
+    - label: "CNCF Kubernetes Release"
+      url: https://kubernetes.io/releases/
+  autoRemediationPossible: false
+- id: EKS_LOGGING_CONTROLLER
+  service: EKS
+  title: "Enable controller manager logs"
+  severity: MEDIUM
+  rationale: "Controller logs aid debugging."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [controllerManager]
+  references:
+    - label: "Kubernetes Logging"
+      url: https://kubernetes.io/docs/concepts/cluster-administration/logging/
+  autoRemediationPossible: true
+- id: EKS_LOGGING_SCHEDULER
+  service: EKS
+  title: "Enable scheduler logs"
+  severity: MEDIUM
+  rationale: "Scheduler logs highlight scheduling anomalies."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [scheduler]
+  references:
+    - label: "Kubernetes Logging"
+      url: https://kubernetes.io/docs/concepts/cluster-administration/logging/
+  autoRemediationPossible: true
+- id: EKS_ENDPOINT_PRIVATE
+  service: EKS
+  title: "Ensure private endpoint is enabled"
+  severity: HIGH
+  rationale: "Private endpoint prevents control plane access over internet."
+  evaluation:
+    evaluator: eks.endpoint_restriction_rule
+  references:
+    - label: "CIS Amazon EKS Benchmark 2.1"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: true
+- id: EKS_VERSION_DRIFT_TWO_MINOR
+  service: EKS
+  title: "Clusters more than two minors behind"
+  severity: CRITICAL
+  rationale: "Two minor releases behind indicates urgent upgrade need."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 2
+  references:
+    - label: "AWS EKS Upgrades"
+      url: https://docs.aws.amazon.com/eks/latest/userguide/update-cluster.html
+  autoRemediationPossible: false
+- id: EKS_ENDPOINT_AUDIT
+  service: EKS
+  title: "Documented CIDR allowlist"
+  severity: MEDIUM
+  rationale: "CIDR allowlists should be documented"
+  evaluation:
+    evaluator: eks.endpoint_restriction_rule
+  references:
+    - label: "AWS Well-Architected"
+      url: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/security.html
+  autoRemediationPossible: false
+- id: EKS_IRSA_TAGS
+  service: EKS
+  title: "Tag clusters adopting IRSA"
+  severity: LOW
+  rationale: "Tags track IRSA adoption coverage."
+  evaluation:
+    evaluator: eks.irsa_usage_rule
+  references:
+    - label: "AWS Tagging"
+      url: https://docs.aws.amazon.com/general/latest/gr/aws_tagging.html
+  autoRemediationPossible: false
+- id: EKS_VERSION_DRIFT_PATCH
+  service: EKS
+  title: "Patch version drift"
+  severity: LOW
+  rationale: "Patch drift surfaces nodes missing latest patch."
+  evaluation:
+    evaluator: eks.version_skew_rule
+    currentVersion: "1.29"
+    minorDrift: 0
+  references:
+    - label: "Kubernetes Patch Guidance"
+      url: https://kubernetes.io/releases/patch-releases/
+  autoRemediationPossible: false
+- id: EKS_ENDPOINT_HARDENING
+  service: EKS
+  title: "Ensure endpoint exposure rationale documented"
+  severity: MEDIUM
+  rationale: "Clusters with public endpoints must justify risk."
+  evaluation:
+    evaluator: eks.endpoint_restriction_rule
+  references:
+    - label: "AWS Well-Architected"
+      url: https://docs.aws.amazon.com/wellarchitected/latest/security-pillar/security.html
+  autoRemediationPossible: false
+- id: EKS_CONTROL_PLANE_LOGGING_OPTIN
+  service: EKS
+  title: "Clusters should opt in to all control plane logs"
+  severity: HIGH
+  rationale: "Enable all logs for mission critical clusters."
+  evaluation:
+    evaluator: eks.control_plane_logging_rule
+    requiredLogs: [api, audit, authenticator, scheduler, controllerManager]
+  references:
+    - label: "CIS Amazon EKS Benchmark 3.1"
+      url: https://www.cisecurity.org/benchmark/amazon_eks
+  autoRemediationPossible: true
